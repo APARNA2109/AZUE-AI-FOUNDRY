@@ -2,106 +2,159 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "aiName": {
-      "type": "string",
-      "defaultValue": "gpt4o-access"
+    "account_name": {
+      "defaultValue": "aiFoundary",
+      "type": "String"
     },
     "location": {
-      "type": "string",
-      "defaultValue": "eastus"
+      "defaultValue": "[resourceGroup().location]",
+      "type": "String"
     },
-    "email": {
-      "type": "string",
-      "defaultValue": "aparnamoahnty6779@gmail.com"
+    "deploymentId": {
+      "type": "String"
+    },
+    "webhookUri": {
+      "type": "String"
+    },
+    "webhookResourceId": {
+      "type": "String"
     }
+  },
+  "variables": {
+    "account_name": "[concat(parameters('account_name'), '-', parameters('deploymentId'))]"
   },
   "resources": [
     {
       "type": "Microsoft.CognitiveServices/accounts",
-      "apiVersion": "2022-12-01",
-      "name": "[parameters('aiName')]",
+      "apiVersion": "2025-04-01-preview",
+      "name": "[variables('account_name')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "S0"
       },
-      "kind": "OpenAI",
+      "kind": "AIServices",
+      "identity": {
+        "type": "SystemAssigned"
+      },
       "properties": {
-        "customSubDomainName": "[parameters('aiName')]"
+        "apiProperties": {},
+        "customSubDomainName": "[variables('account_name')]",
+        "networkAcls": {
+          "defaultAction": "Deny",
+          "virtualNetworkRules": [],
+          "ipRules": []
+        },
+        "allowProjectManagement": true,
+        "defaultProject": "aiProject",
+        "associatedProjects": [
+          "aiProject"
+        ],
+        "publicNetworkAccess": "Disabled"
+      }
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts/deployments",
+      "apiVersion": "2025-04-01-preview",
+      "name": "[concat(variables('account_name'), '/gpt-4o')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]"
+      ],
+      "sku": {
+        "name": "GlobalStandard",
+        "capacity": 10
+      },
+      "properties": {
+        "model": {
+          "format": "OpenAI",
+          "name": "gpt-4o",
+          "version": "2024-11-20"
+        },
+        "versionUpgradeOption": "OnceNewDefaultVersionAvailable",
+        "currentCapacity": 10,
+        "raiPolicyName": "Microsoft.DefaultV2"
+      }
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts/projects",
+      "apiVersion": "2025-04-01-preview",
+      "name": "[concat(variables('account_name'), '/aiProject')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]"
+      ],
+      "kind": "AIServices",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "description": "Default project with guardrails",
+        "displayName": "aiProject"
+      }
+    },
+    {
+      "type": "Microsoft.Insights/actionGroups",
+      "apiVersion": "2022-06-01",
+      "name": "[concat(variables('account_name'), '-ActionGroup')]",
+      "location": "global",
+      "properties": {
+        "groupShortName": "AlertGrp",
+        "enabled": true,
+        "automationRunbookReceivers": [
+          {
+            "automationAccountId": "[resourceId('Microsoft.Automation/automationAccounts', concat(variables('account_name'), '-automation'))]",
+            "runbookName": "DisableAIService",
+            "name": "RemediationRunbook",
+            "serviceUri": "[parameters('webhookUri')]",
+            "useCommonAlertSchema": true,
+            "webhookResourceId": "[parameters('webhookResourceId')]"
+          }
+        ],
+        "emailReceivers": [
+          {
+            "name": "AparnaEmail",
+            "emailAddress": "aparnamohanty6779@gmail.com",
+            "useCommonAlertSchema": true
+          }
+        ]
       }
     },
     {
       "type": "Microsoft.Insights/metricAlerts",
       "apiVersion": "2018-03-01",
-      "name": "token-usage-alert",
+      "name": "[concat(variables('account_name'), '-ProcessedInferenceTokenAlert')]",
       "location": "global",
       "dependsOn": [
-        "[resourceId('Microsoft.CognitiveServices/accounts', parameters('aiName'))]"
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]",
+        "[resourceId('Microsoft.Insights/actionGroups', concat(variables('account_name'), '-ActionGroup'))]"
       ],
       "properties": {
-        "description": "Alert when token usage exceeds 2000",
-        "severity": 3,
+        "severity": 2,
         "enabled": true,
         "scopes": [
-          "[resourceId('Microsoft.CognitiveServices/accounts', parameters('aiName'))]"
+          "[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]"
         ],
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
         "criteria": {
           "allOf": [
             {
-              "metricName": "TokensUsed",
-              "metricNamespace": "microsoft.cognitiveservices/accounts",
-              "operator": "GreaterThan",
               "threshold": 2000,
+              "name": "ProcessedInferenceTokenThreshold",
+              "metricNamespace": "Microsoft.CognitiveServices/accounts",
+              "metricName": "TokenTransaction",
+              "operator": "GreaterThan",
               "timeAggregation": "Total",
               "criterionType": "StaticThresholdCriterion"
             }
-          ]
+          ],
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria"
         },
+        "autoMitigate": true,
         "actions": [
           {
-            "actionGroupId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/microsoft.insights/actionGroups/tokenActionGroup')]"
+            "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups', concat(variables('account_name'), '-ActionGroup'))]"
           }
         ]
-      }
-    },
-    {
-      "type": "Microsoft.Insights/actionGroups",
-      "apiVersion": "2019-06-01",
-      "name": "tokenActionGroup",
-      "location": "Global",
-      "properties": {
-        "groupShortName": "TokenGrp",
-        "enabled": true,
-        "emailReceivers": [
-          {
-            "name": "adminEmail",
-            "emailAddress": "[parameters('email')]"
-          }
-        ]
-      }
-    },
-    {
-      "type": "Microsoft.Automation/automationAccounts",
-      "apiVersion": "2020-01-13-preview",
-      "name": "auto-remediate",
-      "location": "[parameters('location')]",
-      "properties": {}
-    },
-    {
-      "type": "Microsoft.Automation/automationAccounts/runbooks",
-      "apiVersion": "2020-01-13-preview",
-      "name": "auto-remediate/revokeAccessRunbook",
-      "dependsOn": [
-        "auto-remediate"
-      ],
-      "properties": {
-        "runbookType": "PowerShell",
-        "logVerbose": true,
-        "logProgress": true,
-        "description": "Revoke access to Azure OpenAI when token threshold exceeded",
-        "publishContentLink": {
-          "uri": "https://raw.githubusercontent.com/your-repo/revoke-script.ps1",
-          "contentVersion": "1.0.0.0"
-        }
       }
     }
   ]
