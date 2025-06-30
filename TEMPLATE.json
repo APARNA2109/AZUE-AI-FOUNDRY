@@ -1,0 +1,108 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "aiName": {
+      "type": "string",
+      "defaultValue": "gpt4o-access"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "eastus"
+    },
+    "email": {
+      "type": "string",
+      "defaultValue": "aparnamoahnty6779@gmail.com"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.CognitiveServices/accounts",
+      "apiVersion": "2022-12-01",
+      "name": "[parameters('aiName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "S0"
+      },
+      "kind": "OpenAI",
+      "properties": {
+        "customSubDomainName": "[parameters('aiName')]"
+      }
+    },
+    {
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "name": "token-usage-alert",
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', parameters('aiName'))]"
+      ],
+      "properties": {
+        "description": "Alert when token usage exceeds 2000",
+        "severity": 3,
+        "enabled": true,
+        "scopes": [
+          "[resourceId('Microsoft.CognitiveServices/accounts', parameters('aiName'))]"
+        ],
+        "criteria": {
+          "allOf": [
+            {
+              "metricName": "TokensUsed",
+              "metricNamespace": "microsoft.cognitiveservices/accounts",
+              "operator": "GreaterThan",
+              "threshold": 2000,
+              "timeAggregation": "Total",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ]
+        },
+        "actions": [
+          {
+            "actionGroupId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/microsoft.insights/actionGroups/tokenActionGroup')]"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Insights/actionGroups",
+      "apiVersion": "2019-06-01",
+      "name": "tokenActionGroup",
+      "location": "Global",
+      "properties": {
+        "groupShortName": "TokenGrp",
+        "enabled": true,
+        "emailReceivers": [
+          {
+            "name": "adminEmail",
+            "emailAddress": "[parameters('email')]"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Automation/automationAccounts",
+      "apiVersion": "2020-01-13-preview",
+      "name": "auto-remediate",
+      "location": "[parameters('location')]",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Automation/automationAccounts/runbooks",
+      "apiVersion": "2020-01-13-preview",
+      "name": "auto-remediate/revokeAccessRunbook",
+      "dependsOn": [
+        "auto-remediate"
+      ],
+      "properties": {
+        "runbookType": "PowerShell",
+        "logVerbose": true,
+        "logProgress": true,
+        "description": "Revoke access to Azure OpenAI when token threshold exceeded",
+        "publishContentLink": {
+          "uri": "https://raw.githubusercontent.com/your-repo/revoke-script.ps1",
+          "contentVersion": "1.0.0.0"
+        }
+      }
+    }
+  ]
+}
