@@ -2,14 +2,20 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "aiName": {
-      "value": "gpt4o-access"
+    "account_name": {
+      "value": "aiFoundary"
     },
     "location": {
       "value": "eastus"
     },
-    "email": {
-      "value": "aparnamoahnty6779@gmail.com"
+    "deploymentId": {
+      "value": "aparna123"
+    },
+    "webhookUri": {
+      "value": "https://ebdaa0a7-2e92-40a6-8e7f-44b0a6e4e0e8.webhook.eus.azure-automation.net/webhooks?token=N%2f8O83lrUfHBwJRnIcH96b6j2O9gxbE%2beqkT2luMFRk%3d"
+    },
+    "webhookResourceId": {
+      "value": "/subscriptions/e6ebb882-3851-4717-9ba0-e88387bd3b84/resourceGroups/ODL-2109-1776948/providers/Microsoft.Automation/automationAccounts/aiFoundary-aparna123-automation/webhooks/disablewebhookservices"
     }
   }
 }
