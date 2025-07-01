@@ -3,9 +3,9 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "account_name": { "defaultValue": "aiFoundary", "type": "String" },
-    "location":     { "defaultValue": "[resourceGroup().location]", "type": "String" },
+    "location": { "defaultValue": "[resourceGroup().location]", "type": "String" },
     "deploymentId": { "type": "String" },
-    "webhookUri":   { "type": "String" },
+    "webhookUri": { "type": "String" },
     "webhookResourceId": { "type": "String" }
   },
   "variables": {
