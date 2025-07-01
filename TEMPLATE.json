@@ -3,9 +3,9 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "account_name": { "defaultValue": "aiFoundary", "type": "String" },
-    "location": { "defaultValue": "[resourceGroup().location]", "type": "String" },
+    "location":     { "defaultValue": "[resourceGroup().location]", "type": "String" },
     "deploymentId": { "type": "String" },
-    "webhookUri": { "type": "String" },
+    "webhookUri":   { "type": "String" },
     "webhookResourceId": { "type": "String" }
   },
   "variables": {
@@ -22,11 +22,7 @@
       "identity": { "type": "SystemAssigned" },
       "properties": {
         "customSubDomainName": "[variables('account_name')]",
-        "networkAcls": {
-          "defaultAction": "Deny",
-          "virtualNetworkRules": [],
-          "ipRules": []
-        },
+        "networkAcls": { "defaultAction": "Deny", "virtualNetworkRules": [], "ipRules": [] },
         "allowProjectManagement": true,
         "defaultProject": "aiProject",
         "associatedProjects": [ "aiProject" ],
@@ -38,63 +34,36 @@
       "type": "Microsoft.CognitiveServices/accounts/raiBlocklists",
       "apiVersion": "2025-04-01-preview",
       "name": "[concat(variables('account_name'), '/bitcoinBlocklist')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]"
-      ],
-      "properties": {
-        "description": "Block chats related to bitcoin mining"
-      }
+      "dependsOn": [ "[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]" ],
+      "properties": { "description": "Block chats related to bitcoin mining" }
     },
     {
       "type": "Microsoft.CognitiveServices/accounts/raiBlocklists/raiBlocklistItems",
       "apiVersion": "2025-04-01-preview",
       "name": "[concat(variables('account_name'), '/bitcoinBlocklist/term-bitcoin')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')]"
-      ],
-      "properties": {
-        "pattern": "bitcoin",
-        "isRegex": false
-      }
+      "dependsOn": [ "[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')]" ],
+      "properties": { "pattern": "bitcoin", "isRegex": false }
     },
     {
       "type": "Microsoft.CognitiveServices/accounts/raiBlocklists/raiBlocklistItems",
       "apiVersion": "2025-04-01-preview",
       "name": "[concat(variables('account_name'), '/bitcoinBlocklist/term-bitcoin-mining')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')]"
-      ],
-      "properties": {
-        "pattern": "bitcoin mining",
-        "isRegex": false
-      }
+      "dependsOn": [ "[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')]" ],
+      "properties": { "pattern": "bitcoin mining", "isRegex": false }
     },
     {
       "type": "Microsoft.CognitiveServices/accounts/raiPolicies",
       "apiVersion": "2025-04-01-preview",
       "name": "[concat(variables('account_name'), '/aiGuardrails')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')]"
-      ],
+      "dependsOn": [ "[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')]" ],
       "properties": {
         "basePolicyName": "Microsoft.Default",
         "mode": "Asynchronous_Filter",
         "customBlocklists": [
-          {
-            "blocklistName": "bitcoinBlocklist",
-            "blocking": true,
-            "source": "Prompt"
-          },
-          {
-            "blocklistName": "bitcoinBlocklist",
-            "blocking": true,
-            "source": "Completion"
-          }
+          { "blocklistName": "bitcoinBlocklist", "blocking": true, "source": "Prompt" },
+          { "blocklistName": "bitcoinBlocklist", "blocking": true, "source": "Completion" }
         ],
-        "contentFilters": {
-          "harmCategories": [],
-          "blocklistAction": "Block"
-        }
+        "contentFilters": { "harmCategories": [], "blocklistAction": "Block" }
       }
     },
     {
@@ -105,16 +74,9 @@
         "[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]",
         "[resourceId('Microsoft.CognitiveServices/accounts/raiPolicies', variables('account_name'), 'aiGuardrails')]"
       ],
-      "sku": {
-        "name": "GlobalStandard",
-        "capacity": 10
-      },
+      "sku": { "name": "GlobalStandard", "capacity": 10 },
       "properties": {
-        "model": {
-          "format": "OpenAI",
-          "name": "gpt-4o",
-          "version": "2024-11-20"
-        },
+        "model": { "format": "OpenAI", "name": "gpt-4o", "version": "2024-11-20" },
         "versionUpgradeOption": "OnceNewDefaultVersionAvailable",
         "currentCapacity": 10,
         "raiPolicyName": "aiGuardrails"
@@ -127,12 +89,110 @@
       "location": "[parameters('location')]",
       "kind": "AIServices",
       "identity": { "type": "SystemAssigned" },
+      "dependsOn": [ "[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]" ],
+      "properties": { "description": "Default project with guardrails", "displayName": "aiProject" }
+    },
+    {
+      "type": "Microsoft.Insights/actionGroups",
+      "apiVersion": "2022-06-01",
+      "name": "[concat(variables('account_name'), '-ActionGroup')]",
+      "location": "global",
+      "properties": {
+        "groupShortName": "AlertGrp",
+        "enabled": true,
+        "automationRunbookReceivers": [
+          {
+            "automationAccountId": "[resourceId('Microsoft.Automation/automationAccounts', concat(variables('account_name'), '-automation'))]",
+            "runbookName": "DisableAIService",
+            "name": "RemediationRunbook",
+            "serviceUri": "[parameters('webhookUri')]",
+            "useCommonAlertSchema": true,
+            "webhookResourceId": "[parameters('webhookResourceId')]"
+          }
+        ],
+        "emailReceivers": [
+          {
+            "name": "AparnaEmail",
+            "emailAddress": "aparnamohanty6779@gmail.com",
+            "useCommonAlertSchema": true
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "name": "[concat(variables('account_name'), '-InputTokenAlert')]",
+      "location": "global",
       "dependsOn": [
-        "[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]"
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]",
+        "[resourceId('Microsoft.Insights/actionGroups', concat(variables('account_name'), '-ActionGroup'))]"
       ],
       "properties": {
-        "description": "Default project with guardrails",
-        "displayName": "aiProject"
+        "severity": 2,
+        "enabled": true,
+        "scopes": [ "[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]" ],
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "criteria": {
+          "allOf": [
+            {
+              "threshold": 2000,
+              "name": "InputTokenThreshold",
+              "metricNamespace": "Microsoft.CognitiveServices/accounts",
+              "metricName": "TokenTransaction",
+              "dimensions": [],
+              "operator": "GreaterThan",
+              "timeAggregation": "Total",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ],
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria"
+        },
+        "autoMitigate": true,
+        "actions": [
+          {
+            "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups', concat(variables('account_name'), '-ActionGroup'))]"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "name": "[concat(variables('account_name'), '-OutputTokenAlert')]",
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]",
+        "[resourceId('Microsoft.Insights/actionGroups', concat(variables('account_name'), '-ActionGroup'))]"
+      ],
+      "properties": {
+        "severity": 2,
+        "enabled": true,
+        "scopes": [ "[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]" ],
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "criteria": {
+          "allOf": [
+            {
+              "threshold": 2000,
+              "name": "OutputTokenThreshold",
+              "metricNamespace": "Microsoft.CognitiveServices/accounts",
+              "metricName": "TokenTransaction",
+              "dimensions": [],
+              "operator": "GreaterThan",
+              "timeAggregation": "Total",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ],
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria"
+        },
+        "autoMitigate": true,
+        "actions": [
+          {
+            "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups', concat(variables('account_name'), '-ActionGroup'))]"
+          }
+        ]
       }
     }
   ]
