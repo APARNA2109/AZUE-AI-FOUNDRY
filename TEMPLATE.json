@@ -78,7 +78,7 @@
       ],
       "properties": {
         "basePolicyName": "Microsoft.Default",
-        "mode": "Asynchronous_filter",
+        "mode": "Asynchronous_Filter",
         "customBlocklists": [
           {
             "blocklistName": "bitcoinBlocklist",
@@ -90,7 +90,11 @@
             "blocking": true,
             "source": "Completion"
           }
-        ]
+        ],
+        "contentFilters": {
+          "harmCategories": [],
+          "blocklistAction": "Block"
+        }
       }
     },
     {
