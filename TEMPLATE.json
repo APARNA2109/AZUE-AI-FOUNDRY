@@ -97,13 +97,7 @@
       "properties": {
         "basePolicyName": "Microsoft.Default",
         "mode": "Asynchronous_Filter",
-        "promptBlocklists": [
-          {
-            "blocklistName": "bitcoinBlocklist",
-            "blocking": true
-          }
-        ],
-        "completionBlocklists": [
+        "customBlocklists": [
           {
             "blocklistName": "bitcoinBlocklist",
             "blocking": true
