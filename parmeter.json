@@ -9,13 +9,13 @@
       "value": "eastus"
     },
     "deploymentId": {
-      "value": "akshatDeploy01"
+      "value": "mamiapaDeploy01"
     },
     "webhookUri": {
-      "value": "https://your-webhook-url-from-automation-account"
+      "value": "https://<your-region>.webhook.azure-automation.net/webhooks?token=YOUR-TOKEN"
     },
     "webhookResourceId": {
-      "value": "/subscriptions/your-sub-id/resourceGroups/your-resource-group/providers/Microsoft.Automation/automationAccounts/your-automation-account/webhooks/your-webhook-name"
+      "value": "/subscriptions/<your-sub-id>/resourceGroups/<your-rg-name>/providers/Microsoft.Automation/automationAccounts/<your-automation-account>/webhooks/<your-webhook-name>"
     }
   }
 }
