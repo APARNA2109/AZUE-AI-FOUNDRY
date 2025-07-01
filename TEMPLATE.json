@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "account_name": { "defaultValue": "aiFoundary", "type": "String" },
-    "location": { "defaultValue": "[resourceGroup().location]", "type": "String" },
+    "location": { "defaultValue": "eastus", "type": "String" },
     "deploymentId": { "type": "String" },
     "webhookUri": { "type": "String" },
     "webhookResourceId": { "type": "String" }
@@ -22,7 +22,11 @@
       "identity": { "type": "SystemAssigned" },
       "properties": {
         "customSubDomainName": "[variables('account_name')]",
-        "networkAcls": { "defaultAction": "Deny", "virtualNetworkRules": [], "ipRules": [] },
+        "networkAcls": {
+          "defaultAction": "Deny",
+          "virtualNetworkRules": [],
+          "ipRules": []
+        },
         "allowProjectManagement": true,
         "defaultProject": "aiProject",
         "associatedProjects": ["aiProject"],
@@ -31,31 +35,54 @@
       }
     },
     {
+      "type": "Microsoft.CognitiveServices/accounts/projects",
+      "apiVersion": "2025-04-01-preview",
+      "name": "[concat(variables('account_name'), '/aiProject')]",
+      "location": "[parameters('location')]",
+      "kind": "AIServices",
+      "identity": { "type": "SystemAssigned" },
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]"
+      ],
+      "properties": {
+        "description": "Default project with guardrails",
+        "displayName": "aiProject"
+      }
+    },
+    {
       "type": "Microsoft.CognitiveServices/accounts/raiBlocklists",
       "apiVersion": "2025-04-01-preview",
       "name": "[concat(variables('account_name'), '/bitcoinBlocklist')]",
-      "dependsOn": ["[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]"],
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]"
+      ],
       "properties": { "description": "Block chats related to bitcoin mining" }
     },
     {
       "type": "Microsoft.CognitiveServices/accounts/raiBlocklists/raiBlocklistItems",
       "apiVersion": "2025-04-01-preview",
       "name": "[concat(variables('account_name'), '/bitcoinBlocklist/term-bitcoin')]",
-      "dependsOn": ["[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')"]],
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')]"
+      ],
       "properties": { "pattern": "bitcoin", "isRegex": false }
     },
     {
       "type": "Microsoft.CognitiveServices/accounts/raiBlocklists/raiBlocklistItems",
       "apiVersion": "2025-04-01-preview",
       "name": "[concat(variables('account_name'), '/bitcoinBlocklist/term-bitcoin-mining')]",
-      "dependsOn": ["[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')"]],
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')]"
+      ],
       "properties": { "pattern": "bitcoin mining", "isRegex": false }
     },
     {
       "type": "Microsoft.CognitiveServices/accounts/raiPolicies",
       "apiVersion": "2024-10-01",
       "name": "[concat(variables('account_name'), '/aiGuardrails')]",
-      "dependsOn": ["[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')"]],
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')]"
+      ],
       "properties": {
         "basePolicyName": "Microsoft.Default",
         "mode": "Asynchronous_filter",
@@ -89,16 +116,6 @@
         "currentCapacity": 10,
         "raiPolicyName": "aiGuardrails"
       }
-    },
-    {
-      "type": "Microsoft.CognitiveServices/accounts/projects",
-      "apiVersion": "2025-04-01-preview",
-      "name": "[concat(variables('account_name'), '/aiProject')]",
-      "location": "[parameters('location')]",
-      "kind": "AIServices",
-      "identity": { "type": "SystemAssigned" },
-      "dependsOn": ["[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]"],
-      "properties": { "description": "Default project with guardrails", "displayName": "aiProject" }
     },
     {
       "type": "Microsoft.Insights/actionGroups",
