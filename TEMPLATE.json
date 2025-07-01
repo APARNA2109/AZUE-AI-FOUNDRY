@@ -41,21 +41,21 @@
       "type": "Microsoft.CognitiveServices/accounts/raiBlocklists/raiBlocklistItems",
       "apiVersion": "2025-04-01-preview",
       "name": "[concat(variables('account_name'), '/bitcoinBlocklist/term-bitcoin')]",
-      "dependsOn": ["[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')]"],
+      "dependsOn": ["[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')"]],
       "properties": { "pattern": "bitcoin", "isRegex": false }
     },
     {
       "type": "Microsoft.CognitiveServices/accounts/raiBlocklists/raiBlocklistItems",
       "apiVersion": "2025-04-01-preview",
       "name": "[concat(variables('account_name'), '/bitcoinBlocklist/term-bitcoin-mining')]",
-      "dependsOn": ["[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')]"],
+      "dependsOn": ["[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')"]],
       "properties": { "pattern": "bitcoin mining", "isRegex": false }
     },
     {
       "type": "Microsoft.CognitiveServices/accounts/raiPolicies",
       "apiVersion": "2024-10-01",
       "name": "[concat(variables('account_name'), '/aiGuardrails')]",
-      "dependsOn": ["[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')]"],
+      "dependsOn": ["[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')"]],
       "properties": {
         "basePolicyName": "Microsoft.Default",
         "mode": "Asynchronous_filter",
