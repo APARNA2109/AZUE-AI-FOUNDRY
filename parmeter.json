@@ -9,13 +9,13 @@
       "value": "eastus"
     },
     "deploymentId": {
-      "value": "onkarDeploy01"
+      "value": "akshatDeploy01"
     },
     "webhookUri": {
-      "value": "https://ebdaa0a7-2e92-40a6-8e7f-44b0a6e4e0e8.webhook.eus.azure-automation.net/webhooks?token=N%2f8O83lrUfHBwJRnIcH96b6j2O9gxbE%2beqkT2luMFRk%3d"
+      "value": "https://your-webhook-url-from-automation-account"
     },
     "webhookResourceId": {
-      "value": "/subscriptions/e6ebb882-3851-4717-9ba0-e88387bd3b84/resourceGroups/ODL-2109-1776948/providers/Microsoft.Automation/automationAccounts/aiFoundary-aparna123-automation/webhooks/disablewebhookservices"
+      "value": "/subscriptions/your-sub-id/resourceGroups/your-resource-group/providers/Microsoft.Automation/automationAccounts/your-automation-account/webhooks/your-webhook-name"
     }
   }
 }
