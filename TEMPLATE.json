@@ -53,11 +53,71 @@
       }
     },
     {
+      "type": "Microsoft.CognitiveServices/accounts/raiBlocklists",
+      "apiVersion": "2025-04-01-preview",
+      "name": "[concat(variables('account_name'), '/bitcoinBlocklist')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]"
+      ],
+      "properties": {
+        "description": "Block chats related to bitcoin mining"
+      }
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts/raiBlocklists/raiBlocklistItems",
+      "apiVersion": "2025-04-01-preview",
+      "name": "[concat(variables('account_name'), '/bitcoinBlocklist/term-bitcoin')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', concat(variables('account_name'), '/bitcoinBlocklist'))]"
+      ],
+      "properties": {
+        "pattern": "bitcoin",
+        "isRegex": false
+      }
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts/raiBlocklists/raiBlocklistItems",
+      "apiVersion": "2025-04-01-preview",
+      "name": "[concat(variables('account_name'), '/bitcoinBlocklist/term-bitcoin-mining')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', concat(variables('account_name'), '/bitcoinBlocklist'))]"
+      ],
+      "properties": {
+        "pattern": "bitcoin mining",
+        "isRegex": false
+      }
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts/raiPolicies",
+      "apiVersion": "2025-04-01-preview",
+      "name": "[concat(variables('account_name'), '/aiGuardrails')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', concat(variables('account_name'), '/bitcoinBlocklist'))]"
+      ],
+      "properties": {
+        "basePolicyName": "Microsoft.Default",
+        "mode": "Asynchronous_Filter",
+        "promptBlocklists": [
+          {
+            "blocklistName": "bitcoinBlocklist",
+            "blocking": true
+          }
+        ],
+        "completionBlocklists": [
+          {
+            "blocklistName": "bitcoinBlocklist",
+            "blocking": true
+          }
+        ]
+      }
+    },
+    {
       "type": "Microsoft.CognitiveServices/accounts/deployments",
       "apiVersion": "2025-04-01-preview",
       "name": "[concat(variables('account_name'), '/gpt-4o')]",
       "dependsOn": [
-        "[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]"
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]",
+        "[resourceId('Microsoft.CognitiveServices/accounts/raiPolicies', concat(variables('account_name'), '/aiGuardrails'))]"
       ],
       "sku": {
         "name": "GlobalStandard",
@@ -71,7 +131,7 @@
         },
         "versionUpgradeOption": "OnceNewDefaultVersionAvailable",
         "currentCapacity": 10,
-        "raiPolicyName": "Microsoft.DefaultV2"
+        "raiPolicyName": "aiGuardrails"
       }
     },
     {
