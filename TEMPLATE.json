@@ -25,7 +25,7 @@
         "networkAcls": { "defaultAction": "Deny", "virtualNetworkRules": [], "ipRules": [] },
         "allowProjectManagement": true,
         "defaultProject": "aiProject",
-        "associatedProjects": [ "aiProject" ],
+        "associatedProjects": ["aiProject"],
         "publicNetworkAccess": "Disabled",
         "apiProperties": {}
       }
@@ -34,36 +34,44 @@
       "type": "Microsoft.CognitiveServices/accounts/raiBlocklists",
       "apiVersion": "2025-04-01-preview",
       "name": "[concat(variables('account_name'), '/bitcoinBlocklist')]",
-      "dependsOn": [ "[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]" ],
+      "dependsOn": ["[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]"],
       "properties": { "description": "Block chats related to bitcoin mining" }
     },
     {
       "type": "Microsoft.CognitiveServices/accounts/raiBlocklists/raiBlocklistItems",
       "apiVersion": "2025-04-01-preview",
       "name": "[concat(variables('account_name'), '/bitcoinBlocklist/term-bitcoin')]",
-      "dependsOn": [ "[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')]" ],
+      "dependsOn": ["[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')"]],
       "properties": { "pattern": "bitcoin", "isRegex": false }
     },
     {
       "type": "Microsoft.CognitiveServices/accounts/raiBlocklists/raiBlocklistItems",
       "apiVersion": "2025-04-01-preview",
       "name": "[concat(variables('account_name'), '/bitcoinBlocklist/term-bitcoin-mining')]",
-      "dependsOn": [ "[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')]" ],
+      "dependsOn": ["[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')"]],
       "properties": { "pattern": "bitcoin mining", "isRegex": false }
     },
     {
       "type": "Microsoft.CognitiveServices/accounts/raiPolicies",
-      "apiVersion": "2025-04-01-preview",
+      "apiVersion": "2024-10-01",
       "name": "[concat(variables('account_name'), '/aiGuardrails')]",
-      "dependsOn": [ "[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')]" ],
+      "dependsOn": ["[resourceId('Microsoft.CognitiveServices/accounts/raiBlocklists', variables('account_name'), 'bitcoinBlocklist')"]],
       "properties": {
         "basePolicyName": "Microsoft.Default",
-        "mode": "Asynchronous_Filter",
+        "mode": "Asynchronous_filter",
         "customBlocklists": [
           { "blocklistName": "bitcoinBlocklist", "blocking": true, "source": "Prompt" },
           { "blocklistName": "bitcoinBlocklist", "blocking": true, "source": "Completion" }
         ],
-        "contentFilters": { "harmCategories": [], "blocklistAction": "Block" }
+        "contentFilters": [
+          {
+            "name": "Hate",
+            "blocking": true,
+            "enabled": true,
+            "severityThreshold": "High",
+            "source": "Prompt"
+          }
+        ]
       }
     },
     {
@@ -89,7 +97,7 @@
       "location": "[parameters('location')]",
       "kind": "AIServices",
       "identity": { "type": "SystemAssigned" },
-      "dependsOn": [ "[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]" ],
+      "dependsOn": ["[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]"],
       "properties": { "description": "Default project with guardrails", "displayName": "aiProject" }
     },
     {
@@ -131,7 +139,7 @@
       "properties": {
         "severity": 2,
         "enabled": true,
-        "scopes": [ "[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]" ],
+        "scopes": ["[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]"],
         "evaluationFrequency": "PT1M",
         "windowSize": "PT5M",
         "criteria": {
@@ -169,7 +177,7 @@
       "properties": {
         "severity": 2,
         "enabled": true,
-        "scopes": [ "[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]" ],
+        "scopes": ["[resourceId('Microsoft.CognitiveServices/accounts', variables('account_name'))]"],
         "evaluationFrequency": "PT1M",
         "windowSize": "PT5M",
         "criteria": {
